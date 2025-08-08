@@ -328,10 +328,42 @@
     <script>
         // Admin Dashboard JavaScript
         const API_BASE = '/api';
-        const ADMIN_TOKEN = localStorage.getItem('admin_token') || prompt('Enter admin token:');
+        let ADMIN_TOKEN = localStorage.getItem('admin_token');
         
-        if (ADMIN_TOKEN) {
-            localStorage.setItem('admin_token', ADMIN_TOKEN);
+        // If no admin token, prompt for login
+        if (!ADMIN_TOKEN) {
+            const username = prompt('Enter admin username:');
+            const password = prompt('Enter admin password:');
+            
+            if (username && password) {
+                // Try to login
+                fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        ADMIN_TOKEN = data.token;
+                        localStorage.setItem('admin_token', ADMIN_TOKEN);
+                        loadDashboardData();
+                    } else {
+                        alert('Login failed: ' + data.message);
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    alert('Login failed. Please try again.');
+                    location.reload();
+                });
+            } else {
+                alert('Login cancelled');
+                location.reload();
+            }
         }
 
         // Tab navigation
@@ -372,7 +404,7 @@
             try {
                 const response = await fetch(`${API_BASE}/admin/stats`, {
                     headers: {
-                        'X-Admin-Token': ADMIN_TOKEN
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`
                     }
                 });
                 
@@ -394,7 +426,7 @@
             try {
                 const response = await fetch(`${API_BASE}/admin/users?page=${page}&limit=20`, {
                     headers: {
-                        'X-Admin-Token': ADMIN_TOKEN
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`
                     }
                 });
                 
@@ -419,9 +451,9 @@
             
             tbody.innerHTML = users.map(user => `
                 <tr>
-                    <td>${user.username}</td>
+                    <td>${user.first_name} ${user.last_name}</td>
                     <td>${user.email}</td>
-                    <td>${user.company_name}</td>
+                    <td>${user.company || 'N/A'}</td>
                     <td>
                         <span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">
                             ${user.is_active ? 'Active' : 'Inactive'}
@@ -446,7 +478,7 @@
             try {
                 const response = await fetch(`${API_BASE}/admin/sessions?page=${page}&limit=20`, {
                     headers: {
-                        'X-Admin-Token': ADMIN_TOKEN
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`
                     }
                 });
                 
@@ -471,13 +503,13 @@
             
             tbody.innerHTML = sessions.map(session => `
                 <tr>
-                    <td>${session.username}</td>
+                    <td>${session.first_name} ${session.last_name}</td>
                     <td>${session.ip_address}</td>
                     <td>${session.mac_address || 'N/A'}</td>
                     <td>${new Date(session.session_start).toLocaleString()}</td>
                     <td>${session.session_end ? new Date(session.session_end).toLocaleString() : 'Active'}</td>
                     <td>${session.duration ? formatDuration(session.duration) : 'N/A'}</td>
-                    <td>${formatBytes(session.bytes_in + session.bytes_out)}</td>
+                    <td>${formatBytes((session.bytes_in || 0) + (session.bytes_out || 0))}</td>
                 </tr>
             `).join('');
         }
@@ -517,7 +549,7 @@
             try {
                 const response = await fetch(`${API_BASE}/admin/reports/${type}`, {
                     headers: {
-                        'X-Admin-Token': ADMIN_TOKEN
+                        'Authorization': `Bearer ${ADMIN_TOKEN}`
                     }
                 });
                 
@@ -572,8 +604,10 @@
             // Implement session search
         });
 
-        // Load initial data
-        loadDashboardData();
+        // Load initial data if we have a token
+        if (ADMIN_TOKEN) {
+            loadDashboardData();
+        }
     </script>
 </body>
 </html>

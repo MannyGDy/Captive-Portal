@@ -35,61 +35,52 @@ class CaptivePortal {
             this.handleRegister();
         });
 
-        // Modal events
-        const modalClose = document.getElementById('modal-close');
-        const modalOk = document.getElementById('modal-ok');
-        const errorModal = document.getElementById('error-modal');
-
-        modalClose.addEventListener('click', () => {
-            this.hideModal();
-        });
-
-        modalOk.addEventListener('click', () => {
-            this.hideModal();
-        });
-
-        // Close modal when clicking outside
-        errorModal.addEventListener('click', (e) => {
-            if (e.target === errorModal) {
-                this.hideModal();
-            }
-        });
+        // Modal events removed - using alerts instead
 
         // Form validation
         this.setupFormValidation();
     }
 
     setupFormValidation() {
-        // Username validation
-        const usernameInputs = document.querySelectorAll('input[name="username"]');
-        usernameInputs.forEach(input => {
+        // Email validation for both login and register forms
+        const emailInputs = document.querySelectorAll('input[type="email"]');
+        emailInputs.forEach(input => {
             input.addEventListener('input', (e) => {
                 const value = e.target.value;
-                const isValid = /^[a-zA-Z0-9_]{3,30}$/.test(value);
+                const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
                 this.toggleFieldValidation(e.target, isValid);
             });
         });
 
-        // Email validation
-        const emailInput = document.getElementById('register-email');
-        emailInput.addEventListener('input', (e) => {
-            const value = e.target.value;
-            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-            this.toggleFieldValidation(e.target, isValid);
-        });
-
-        // Password confirmation
-        const passwordInput = document.getElementById('register-password');
-        const confirmPasswordInput = document.getElementById('register-confirm-password');
-        
-        [passwordInput, confirmPasswordInput].forEach(input => {
-            input.addEventListener('input', () => {
-                const password = passwordInput.value;
-                const confirmPassword = confirmPasswordInput.value;
-                const isValid = password === confirmPassword && password.length >= 6;
-                this.toggleFieldValidation(confirmPasswordInput, isValid);
+        // Phone number validation
+        const phoneInputs = document.querySelectorAll('input[type="tel"]');
+        phoneInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                const isValid = /^(070|080|081|090|091)\d{8}$/.test(value);
+                this.toggleFieldValidation(e.target, isValid);
             });
         });
+
+        // Name validation
+        const nameInputs = document.querySelectorAll('input[name="first_name"], input[name="last_name"]');
+        nameInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const isValid = value.length >= 2 && value.length <= 100;
+                this.toggleFieldValidation(e.target, isValid);
+            });
+        });
+
+        // Company validation
+        const companyInput = document.getElementById('register-company');
+        if (companyInput) {
+            companyInput.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const isValid = value.length >= 2 && value.length <= 200;
+                this.toggleFieldValidation(e.target, isValid);
+            });
+        }
     }
 
     toggleFieldValidation(field, isValid) {
@@ -209,18 +200,22 @@ class CaptivePortal {
 
     showSuccess(user) {
         const formContainer = document.querySelector('.form-container');
-        const successMessage = document.getElementById('success-message');
-        const usernameDisplay = document.getElementById('username-display');
-        const connectionTime = document.getElementById('connection-time');
-
-        // Update success message
-        usernameDisplay.textContent = user.username;
-        connectionTime.textContent = new Date().toLocaleTimeString();
+        
+        // Create success message dynamically
+        const successMessage = document.createElement('div');
+        successMessage.className = 'success-container';
+        successMessage.innerHTML = `
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1>Welcome, ${user.first_name}!</h1>
+            <p>You have successfully logged in and now have internet access.</p>
+            <p>Connection time: ${new Date().toLocaleTimeString()}</p>
+        `;
 
         // Hide form and show success message
         formContainer.style.display = 'none';
-        successMessage.style.display = 'block';
-        successMessage.classList.add('fade-in');
+        formContainer.parentNode.appendChild(successMessage);
 
         // Redirect to internet after a delay
         setTimeout(() => {
@@ -236,15 +231,17 @@ class CaptivePortal {
             'http://www.yahoo.com'
         ];
 
-        // Show a message that user is being redirected
-        const successMessage = document.getElementById('success-message');
-        successMessage.innerHTML = `
-            <div class="success-icon">
-                <i class="fas fa-globe"></i>
-            </div>
-            <h2>Redirecting to Internet...</h2>
-            <p>You should now have internet access. If not, please contact support.</p>
-        `;
+        // Update the success message to show redirecting
+        const successContainer = document.querySelector('.success-container');
+        if (successContainer) {
+            successContainer.innerHTML = `
+                <div class="success-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <h1>Redirecting to Internet...</h1>
+                <p>You should now have internet access. If not, please contact support.</p>
+            `;
+        }
 
         // Try to redirect
         setTimeout(() => {
@@ -253,26 +250,63 @@ class CaptivePortal {
     }
 
     showError(message) {
-        const errorModal = document.getElementById('error-modal');
-        const errorMessage = document.getElementById('error-message');
-        
-        errorMessage.textContent = message;
-        errorModal.classList.add('active');
+        // Remove existing alerts
+        const existingAlert = document.querySelector('.alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // Create new alert
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-error';
+        alert.innerHTML = `
+            <i class="fas fa-exclamation-circle"></i>
+            <span>${message}</span>
+        `;
+
+        // Insert alert before form container
+        const formContainer = document.querySelector('.form-container');
+        formContainer.parentNode.insertBefore(alert, formContainer);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
     }
 
     hideModal() {
-        const errorModal = document.getElementById('error-modal');
-        errorModal.classList.remove('active');
+        // This function is no longer needed as we use alerts instead of modals
+        console.log('Modal functionality deprecated');
     }
 
     showLoading() {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = 'flex';
+        // Show loading state on submit buttons
+        const submitButtons = document.querySelectorAll('button[type="submit"]');
+        submitButtons.forEach(btn => {
+            const btnText = btn.querySelector('.btn-text');
+            const loading = btn.querySelector('.loading');
+            if (btnText && loading) {
+                btnText.classList.add('hidden');
+                loading.classList.remove('hidden');
+                btn.disabled = true;
+            }
+        });
     }
 
     hideLoading() {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = 'none';
+        // Hide loading state on submit buttons
+        const submitButtons = document.querySelectorAll('button[type="submit"]');
+        submitButtons.forEach(btn => {
+            const btnText = btn.querySelector('.btn-text');
+            const loading = btn.querySelector('.loading');
+            if (btnText && loading) {
+                btnText.classList.remove('hidden');
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        });
     }
 
     storeUserToken(token) {

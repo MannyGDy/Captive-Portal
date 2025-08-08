@@ -10,35 +10,38 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create users table
-CREATE TABLE IF NOT EXISTS users (
+-- Create user_registrations table
+CREATE TABLE IF NOT EXISTS user_registrations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username VARCHAR(30) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    company_name VARCHAR(100) NOT NULL,
-    phone_number VARCHAR(15) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(11) UNIQUE NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    company VARCHAR(200),
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP NULL
+    CONSTRAINT valid_nigerian_phone CHECK (
+      phone_number ~ '^(070|080|081|090|091)[0-9]{8}$'
+    )
 );
 
--- Create sessions table
-CREATE TABLE IF NOT EXISTS sessions (
+-- Create user_sessions table
+CREATE TABLE IF NOT EXISTS user_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL,
-    ip_address INET NOT NULL,
-    mac_address MACADDR NULL,
+    user_email VARCHAR(255) NOT NULL,
+    ip_address INET,
+    mac_address MACADDR,
     session_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    session_end TIMESTAMP NULL,
+    session_end TIMESTAMP,
     duration INTEGER NULL,
     bytes_in BIGINT DEFAULT 0,
     bytes_out BIGINT DEFAULT 0,
-    mikrotik_session_id VARCHAR(100) NULL,
+    mikrotik_session_id VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create admin_users table
@@ -65,18 +68,17 @@ CREATE TABLE IF NOT EXISTS system_settings (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_name);
-CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
-CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_registrations_email ON user_registrations(email);
+CREATE INDEX IF NOT EXISTS idx_user_registrations_phone ON user_registrations(phone_number);
+CREATE INDEX IF NOT EXISTS idx_user_registrations_active ON user_registrations(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_registrations_created ON user_registrations(created_at);
 
-CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_start ON sessions(session_start);
-CREATE INDEX IF NOT EXISTS idx_sessions_end ON sessions(session_end);
-CREATE INDEX IF NOT EXISTS idx_sessions_mikrotik ON sessions(mikrotik_session_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_active ON sessions(session_end) WHERE session_end IS NULL;
-CREATE INDEX IF NOT EXISTS idx_sessions_date_range ON sessions(session_start, session_end);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_email ON user_sessions(user_email);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_start ON user_sessions(session_start);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_end ON user_sessions(session_end);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_mikrotik ON user_sessions(mikrotik_session_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_active ON user_sessions(session_end) WHERE session_end IS NULL;
+CREATE INDEX IF NOT EXISTS idx_user_sessions_date_range ON user_sessions(session_start, session_end);
 
 CREATE INDEX IF NOT EXISTS idx_admin_users_username ON admin_users(username);
 CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
@@ -117,10 +119,10 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers to automatically update updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+CREATE TRIGGER update_user_registrations_updated_at BEFORE UPDATE ON user_registrations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_sessions_updated_at BEFORE UPDATE ON sessions
+CREATE TRIGGER update_user_sessions_updated_at BEFORE UPDATE ON user_sessions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_admin_users_updated_at BEFORE UPDATE ON admin_users
