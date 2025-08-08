@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Error - WiFi Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .error-container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            color: #e74c3c;
+            margin-bottom: 1rem;
+        }
+        
+        .error-title {
+            color: #e74c3c;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error-message {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .retry-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        
+        .retry-button:hover {
+            background: #2980b9;
+        }
+        
+        .contact-info {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="portal-container">
+            <div class="portal-header">
+                <h1>WiFi Portal</h1>
+                <p>Secure Internet Access</p>
+            </div>
+            
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <h2 class="error-title">Authentication Error</h2>
+                <p class="error-message">
+                    We're sorry, but there was an error processing your login request. 
+                    This could be due to incorrect credentials or a temporary system issue.
+                </p>
+                
+                <button class="retry-button" onclick="retryLogin()">
+                    Try Again
+                </button>
+                
+                <div class="contact-info">
+                    <h4>Need Help?</h4>
+                    <p>If you continue to experience issues, please contact our support team:</p>
+                    <p><strong>Email:</strong> support@company.com</p>
+                    <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function retryLogin() {
+            // Redirect back to the login page
+            window.location.href = '/login';
+        }
+        
+        // Auto-retry after 30 seconds
+        setTimeout(() => {
+            console.log('Auto-retrying login...');
+            retryLogin();
+        }, 30000);
+        
+        // Show countdown
+        let countdown = 30;
+        const countdownElement = document.createElement('div');
+        countdownElement.style.textAlign = 'center';
+        countdownElement.style.marginTop = '1rem';
+        countdownElement.style.color = '#666';
+        document.querySelector('.error-container').appendChild(countdownElement);
+        
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = `Auto-retrying in ${countdown} seconds...`;
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
+

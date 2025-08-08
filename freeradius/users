@@ -1,0 +1,22 @@
+# FreeRADIUS users file for MikroTik Captive Portal
+# This file should be placed in /etc/freeradius/3.0/mods-config/files/authorize
+
+# Test user for development
+testuser Cleartext-Password := "testpass"
+    Reply-Message = "Welcome to our WiFi network!",
+    Session-Timeout = 86400
+
+# Admin user
+admin Cleartext-Password := "admin123"
+    Reply-Message = "Admin access granted",
+    Session-Timeout = 86400
+
+# Guest user
+guest Cleartext-Password := "guest123"
+    Reply-Message = "Guest access granted",
+    Session-Timeout = 3600
+
+# Default user (fallback)
+DEFAULT Auth-Type := Reject
+    Reply-Message = "Access denied. Please contact administrator."
+

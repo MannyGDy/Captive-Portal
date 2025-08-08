@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Timeout - WiFi Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .timeout-container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .timeout-icon {
+            font-size: 4rem;
+            color: #f39c12;
+            margin-bottom: 1rem;
+        }
+        
+        .timeout-title {
+            color: #f39c12;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .timeout-message {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .reconnect-button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+        
+        .reconnect-button:hover {
+            background: #229954;
+        }
+        
+        .logout-button {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        
+        .logout-button:hover {
+            background: #7f8c8d;
+        }
+        
+        .session-info {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #ecf0f1;
+            border-radius: 2px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #f39c12;
+            width: 100%;
+            animation: countdown 60s linear forwards;
+        }
+        
+        @keyframes countdown {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="portal-container">
+            <div class="portal-header">
+                <h1>WiFi Portal</h1>
+                <p>Secure Internet Access</p>
+            </div>
+            
+            <div class="timeout-container">
+                <div class="timeout-icon">⏰</div>
+                <h2 class="timeout-title">Session Timeout</h2>
+                <p class="timeout-message">
+                    Your session has expired due to inactivity. 
+                    To continue using the internet, please log in again.
+                </p>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <p style="color: #666; font-size: 0.9rem;">Auto-redirecting in <span id="countdown">60</span> seconds</p>
+                
+                <div style="margin: 2rem 0;">
+                    <button class="reconnect-button" onclick="reconnect()">
+                        Reconnect Now
+                    </button>
+                    <button class="logout-button" onclick="logout()">
+                        Logout
+                    </button>
+                </div>
+                
+                <div class="session-info">
+                    <h4>Session Information</h4>
+                    <p><strong>Last Activity:</strong> <span id="lastActivity">Unknown</span></p>
+                    <p><strong>Session Duration:</strong> <span id="sessionDuration">Unknown</span></p>
+                    <p><strong>Data Used:</strong> <span id="dataUsed">Unknown</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let countdown = 60;
+        
+        function reconnect() {
+            // Redirect to login page
+            window.location.href = '/login';
+        }
+        
+        function logout() {
+            // Clear any stored session data
+            localStorage.removeItem('portal_session');
+            sessionStorage.clear();
+            
+            // Redirect to login page
+            window.location.href = '/login';
+        }
+        
+        // Update countdown display
+        const countdownElement = document.getElementById('countdown');
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                reconnect();
+            }
+        }, 1000);
+        
+        // Try to get session information from URL parameters or localStorage
+        function loadSessionInfo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const lastActivity = urlParams.get('last_activity') || 'Unknown';
+            const sessionDuration = urlParams.get('duration') || 'Unknown';
+            const dataUsed = urlParams.get('data_used') || 'Unknown';
+            
+            document.getElementById('lastActivity').textContent = lastActivity;
+            document.getElementById('sessionDuration').textContent = sessionDuration;
+            document.getElementById('dataUsed').textContent = dataUsed;
+        }
+        
+        // Load session information when page loads
+        loadSessionInfo();
+        
+        // Prevent page from being cached
+        window.addEventListener('beforeunload', function() {
+            // Clear any cached data
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
