@@ -52,6 +52,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files (for serving the captive portal)
+app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/portal', express.static(path.join(__dirname, '../frontend')));
 
 // API routes
@@ -104,11 +105,13 @@ app.use((req, res) => {
 // Initialize server
 async function startServer() {
   try {
-    // Test database connection
+    // Test database connection (optional for development)
     const dbConnected = await testDatabase();
     if (!dbConnected) {
-      console.error('❌ Failed to connect to database. Please check your configuration.');
-      process.exit(1);
+      console.warn('⚠️  Database connection failed. Server will start without database functionality.');
+      console.warn('   To enable full functionality, please configure your database connection.');
+    } else {
+      console.log('✅ Database connected successfully');
     }
 
     // Start server
